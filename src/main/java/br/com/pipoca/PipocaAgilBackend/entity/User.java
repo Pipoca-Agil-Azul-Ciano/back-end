@@ -56,7 +56,7 @@ public class User implements Serializable {
     private void attributeValidation(String fullName, String email, String password, LocalDate dateBirth, UserTypeEnum userTypeEnum) throws EntityValidationException {
         EntityValidationException.validation(fullName.length() < 2 ||
                 fullName.trim().isBlank() ||
-                !fullName.matches("^[a-zA-Z]{2,}\\s[a-zA-Z]{2,}$\n"), "(Internal Validation) Invalid Full Name. The Full Name must contains 2 or more chars 1 blank space and 2 or more chars.");
+                !fullName.matches("^[a-zA-Z]{2,} [a-zA-Z]{2,}$"), "(Internal Validation) Invalid Full Name. The Full Name must contains 2 or more chars 1 blank space and 2 or more chars.");
 
         EntityValidationException.validation(email.trim().isBlank() ||
                 email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$\n"), "(Internal Validation) Invalid Email. Input a valid email format.");
