@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 @RestController
 @RequestMapping("/user")
@@ -38,7 +41,7 @@ public class UserController {
             @ApiResponse(responseCode = "201", description = "User created",
                     content = @Content(
                             examples = @ExampleObject(
-                                    value = ""
+                                    value = "{\"id\": 123, \"message\": \"Usuário criado com sucesso!\"}"
                             )
                     )),
             @ApiResponse(responseCode = "400", description = "Bad request",
@@ -61,11 +64,14 @@ public class UserController {
                     ))
     })
     @PostMapping("/create")
-    public ResponseEntity<String> creatUser(@RequestBody @Valid UserRegisterDTO userRegisterDTO) {
+    public ResponseEntity<Object> creatUser(@RequestBody @Valid UserRegisterDTO userRegisterDTO) {
 
         try {
-            service.createUser(userRegisterDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
+            int idOfCreatedUser = service.createUser(userRegisterDTO);
+            Map<String, Object> response = new HashMap<>();
+            response.put("id:", idOfCreatedUser);
+            response.put("message", "Usuário criado com sucesso!");
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (ConflictException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         } catch (EntityValidationException e) {

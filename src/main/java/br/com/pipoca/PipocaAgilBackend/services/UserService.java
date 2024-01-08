@@ -9,7 +9,7 @@ import br.com.pipoca.PipocaAgilBackend.enums.UserTypeEnum;
 import br.com.pipoca.PipocaAgilBackend.exceptions.ConflictException;
 import br.com.pipoca.PipocaAgilBackend.exceptions.UnauthorizedException;
 import br.com.pipoca.PipocaAgilBackend.providers.jwt.JwtProvider;
-import br.com.pipoca.PipocaAgilBackend.repository.RepositoryMethods;
+import br.com.pipoca.PipocaAgilBackend.repository.UserDAO;
 import br.com.pipoca.PipocaAgilBackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,20 +24,20 @@ public class UserService {
     private final UserRepository repository;
 
     @Autowired
-    private final RepositoryMethods repositoryMethods;
+    private final UserDAO userDAO;
     @Autowired
     private final PasswordEncoder passwordEncoder;
     @Autowired
     private final JwtProvider jwtProvider;
 
-    public UserService(UserRepository repository, RepositoryMethods repositoryMethods, PasswordEncoder passwordEncoder, JwtProvider jwtProvider) {
+    public UserService(UserRepository repository, UserDAO userDAO, PasswordEncoder passwordEncoder, JwtProvider jwtProvider) {
         this.repository = repository;
-        this.repositoryMethods = repositoryMethods;
+        this.userDAO = userDAO;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
     }
 
-    public void  createUser(UserRegisterDTO userRegisterDTO) throws ConflictException, EntityValidationException {
+    public int  createUser(UserRegisterDTO userRegisterDTO) throws ConflictException, EntityValidationException {
         if(repository.findByEmail(userRegisterDTO.email) != null ){
             throw new ConflictException("Email já cadastrado!");
         }
@@ -45,7 +45,7 @@ public class UserService {
         String passwordEncrypted = this.passwordEncoder.encode(userRegisterDTO.password);
         User user = new User(userRegisterDTO.fullName, userRegisterDTO.email, passwordEncrypted, userRegisterDTO.dateBirth, UserTypeEnum.REGISTERED);
 
-        repository.save(user);
+        return userDAO.createUser(user);
     }
 
     public String authorizeUser(UserLoginDTO userLoginDTO) throws UnauthorizedException {
@@ -59,7 +59,7 @@ public class UserService {
         String hashJwt = jwtProvider.createToken(userLoginDTO.email);
         user.setJwt(hashJwt);
 
-        repositoryMethods.updateUser(user);
+        userDAO.updateUser(user);
 
         return hashJwt;
     }
