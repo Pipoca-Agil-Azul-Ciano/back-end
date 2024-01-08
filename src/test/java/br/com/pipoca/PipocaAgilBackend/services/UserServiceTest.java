@@ -8,7 +8,7 @@ import br.com.pipoca.PipocaAgilBackend.enums.UserTypeEnum;
 import br.com.pipoca.PipocaAgilBackend.exceptions.ConflictException;
 import br.com.pipoca.PipocaAgilBackend.exceptions.UnauthorizedException;
 import br.com.pipoca.PipocaAgilBackend.providers.jwt.JwtProvider;
-import br.com.pipoca.PipocaAgilBackend.repository.RepositoryMethods;
+import br.com.pipoca.PipocaAgilBackend.repository.UserDAO;
 import br.com.pipoca.PipocaAgilBackend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ public class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private RepositoryMethods repositoryMethods;
+    private UserDAO userDAO;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -46,7 +46,7 @@ public class UserServiceTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        userService = new UserService(userRepository, repositoryMethods, passwordEncoder, jwtProvider);
+        userService = new UserService(userRepository, userDAO, passwordEncoder, jwtProvider);
 
     }
 
@@ -57,7 +57,7 @@ public class UserServiceTest {
 
         when(userRepository.findByEmail(anyString())).thenReturn(null);
         when(passwordEncoder.encode(anyString())).thenReturn("encryptedPassword");
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userDAO.createUser(any(User.class))).thenReturn(1);
 
         // Act
         userService.createUser(userRegisterDTO);
@@ -65,7 +65,7 @@ public class UserServiceTest {
         // Assert
         verify(userRepository, times(1)).findByEmail("john@example.com");
         verify(passwordEncoder, times(1)).encode("password123");
-        verify(userRepository, times(1)).save(any(User.class));
+        verify(userDAO, times(1)).createUser(any(User.class));
     }
 
     @Test
@@ -80,7 +80,7 @@ public class UserServiceTest {
         when(userRepository.findByEmail(anyString())).thenReturn(user);
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
         when(jwtProvider.createToken(anyString())).thenReturn("generatedToken");
-        doNothing().when(repositoryMethods).updateUser(any(User.class));
+        doNothing().when(userDAO).updateUser(any(User.class));
 
         // Act
         String token = userService.authorizeUser(userLoginDTO);
@@ -90,6 +90,6 @@ public class UserServiceTest {
         verify(userRepository, times(1)).findByEmail("john@example.com");
         verify(passwordEncoder, times(1)).matches("password123", "encryptedPassword");
         verify(jwtProvider, times(1)).createToken("john@example.com");
-        verify(repositoryMethods, times(1)).updateUser(user);
+        verify(userDAO, times(1)).updateUser(user);
     }
 }
