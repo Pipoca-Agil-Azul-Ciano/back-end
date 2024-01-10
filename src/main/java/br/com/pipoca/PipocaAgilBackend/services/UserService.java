@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -62,5 +63,14 @@ public class UserService {
         userDAO.updateUser(user);
 
         return hashJwt;
+    }
+
+    public Optional<User> deleteUserById(Long id) {
+        repository.findById(id).ifPresent(user -> repository.deleteById(id));
+        return Optional.empty();
+    }
+
+    public List<User> getAllUsers() {
+        return repository.findAll();
     }
 }
