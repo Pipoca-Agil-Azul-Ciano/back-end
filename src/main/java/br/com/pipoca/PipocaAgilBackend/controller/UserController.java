@@ -63,13 +63,14 @@ public class UserController {
                             )
                     ))
     })
+
     @PostMapping("/create")
     public ResponseEntity<Object> creatUser(@RequestBody @Valid UserRegisterDTO userRegisterDTO) {
 
         try {
             int idOfCreatedUser = service.createUser(userRegisterDTO);
             Map<String, Object> response = new HashMap<>();
-            response.put("id:", idOfCreatedUser);
+            response.put("id", idOfCreatedUser);
             response.put("message", "Usuário criado com sucesso!");
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (ConflictException e) {
