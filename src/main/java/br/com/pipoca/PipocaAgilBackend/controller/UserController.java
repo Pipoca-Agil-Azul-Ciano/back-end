@@ -123,12 +123,9 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public void deleteById(@PathVariable Long id) {
-
-        Optional<User> user = service.deleteUserById(id);
-
-        user.ifPresent(u -> service.deleteUserById(id));
-
+        service.deleteUserById(id);
     }
+
 
     @GetMapping("/getAll")
     public ResponseEntity<List<User>> getAllUsers() {
