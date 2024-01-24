@@ -1,5 +1,6 @@
 package br.com.pipoca.PipocaAgilBackend.services;
 
+import br.com.pipoca.PipocaAgilBackend.communication.Communication;
 import br.com.pipoca.PipocaAgilBackend.dtos.UserLoginDTO;
 import br.com.pipoca.PipocaAgilBackend.dtos.UserRegisterDTO;
 import br.com.pipoca.PipocaAgilBackend.entity.User;
@@ -42,11 +43,14 @@ public class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
+    @Mock
+    private Communication communication;
+
     private final LocalDate mockDateOfBirth = LocalDate.parse("01/01/1990", DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        userService = new UserService(userRepository, userDAO, passwordEncoder, jwtProvider);
+        userService = new UserService(userRepository, userDAO, passwordEncoder, jwtProvider, communication);
 
     }
 
