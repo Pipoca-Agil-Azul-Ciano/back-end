@@ -8,12 +8,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.Base64;
 import java.util.Date;
-
-// Refatorar
 @Component
 public class JwtProvider {
 
-    // Implementar .env
     private String secretKey = "secret-key";
     private long validityInMilliseconds = 3600000;
 

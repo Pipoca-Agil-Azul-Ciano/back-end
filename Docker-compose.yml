@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.9'
 
 services:
   spring-app:
@@ -7,9 +7,21 @@ services:
     restart: always
     ports:
       - "8080:8080"
-    networks:
-      - backend-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
 
-networks:
-  backend-network:
-    driver: bridge
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    ports:
+      - "5432:5432"

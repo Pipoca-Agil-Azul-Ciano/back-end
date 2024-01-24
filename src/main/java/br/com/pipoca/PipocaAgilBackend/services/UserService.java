@@ -1,12 +1,15 @@
 package br.com.pipoca.PipocaAgilBackend.services;
 
 
+import br.com.pipoca.PipocaAgilBackend.communication.Communication;
 import br.com.pipoca.PipocaAgilBackend.dtos.UserLoginDTO;
 import br.com.pipoca.PipocaAgilBackend.dtos.UserRegisterDTO;
 import br.com.pipoca.PipocaAgilBackend.entity.User;
 import br.com.pipoca.PipocaAgilBackend.entity.validation.EntityValidationException;
+import br.com.pipoca.PipocaAgilBackend.enums.MailTypeEnum;
 import br.com.pipoca.PipocaAgilBackend.enums.UserTypeEnum;
 import br.com.pipoca.PipocaAgilBackend.exceptions.ConflictException;
+import br.com.pipoca.PipocaAgilBackend.exceptions.InternalErrorException;
 import br.com.pipoca.PipocaAgilBackend.exceptions.UnauthorizedException;
 import br.com.pipoca.PipocaAgilBackend.providers.jwt.JwtProvider;
 import br.com.pipoca.PipocaAgilBackend.repository.UserDAO;
@@ -30,12 +33,15 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     @Autowired
     private final JwtProvider jwtProvider;
+    @Autowired
+    private final Communication communication;
 
-    public UserService(UserRepository repository, UserDAO userDAO, PasswordEncoder passwordEncoder, JwtProvider jwtProvider) {
+    public UserService(UserRepository repository, UserDAO userDAO, PasswordEncoder passwordEncoder, JwtProvider jwtProvider, Communication communication) {
         this.repository = repository;
         this.userDAO = userDAO;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
+        this.communication = communication;
     }
 
     public int  createUser(UserRegisterDTO userRegisterDTO) throws ConflictException, EntityValidationException {
@@ -46,6 +52,11 @@ public class UserService {
         String passwordEncrypted = this.passwordEncoder.encode(userRegisterDTO.password);
         User user = new User(userRegisterDTO.fullName, userRegisterDTO.email, passwordEncrypted, userRegisterDTO.dateBirth, UserTypeEnum.REGISTERED);
 
+        try {
+            this.communication.MailServiceMessage(user.getFullName(), user.getEmail(), MailTypeEnum.WELCOME, null);
+        } catch (InternalErrorException e) {
+            throw new RuntimeException(e);
+        }
         return userDAO.createUser(user);
     }
 
