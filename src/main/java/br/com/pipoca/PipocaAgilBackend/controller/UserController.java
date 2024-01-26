@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 
 @RestController
@@ -122,14 +121,28 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteById(@PathVariable Long id) {
-        service.deleteUserById(id);
+    public ResponseEntity<String> deleteById(@PathVariable Long id) {
+        try {
+          service.deleteUserById(id);
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno, tente novamente mais tarde.");
+        }
+
+
     }
 
 
     @GetMapping("/getAll")
     public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = service.getAllUsers();
-        return ResponseEntity.ok(users);
+        try {
+            List<User> users = service.getAllUsers();
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
+
 }
