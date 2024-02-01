@@ -8,6 +8,7 @@ import br.com.pipoca.PipocaAgilBackend.entity.User;
 import br.com.pipoca.PipocaAgilBackend.entity.validation.EntityValidationException;
 import br.com.pipoca.PipocaAgilBackend.enums.MailTypeEnum;
 import br.com.pipoca.PipocaAgilBackend.enums.UserTypeEnum;
+import br.com.pipoca.PipocaAgilBackend.exceptions.BadRequestException;
 import br.com.pipoca.PipocaAgilBackend.exceptions.ConflictException;
 import br.com.pipoca.PipocaAgilBackend.exceptions.InternalErrorException;
 import br.com.pipoca.PipocaAgilBackend.exceptions.UnauthorizedException;
@@ -18,7 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -44,8 +47,8 @@ public class UserService {
         this.communication = communication;
     }
 
-    public int  createUser(UserRegisterDTO userRegisterDTO) throws ConflictException, EntityValidationException {
-        if(repository.findByEmail(userRegisterDTO.email) != null ){
+    public int createUser(UserRegisterDTO userRegisterDTO) throws ConflictException, EntityValidationException {
+        if (repository.findByEmail(userRegisterDTO.email) != null) {
             throw new ConflictException("Email já cadastrado!");
         }
 
@@ -60,7 +63,7 @@ public class UserService {
         return userDAO.createUser(user);
     }
 
-    public String authorizeUser(UserLoginDTO userLoginDTO) throws UnauthorizedException {
+    public Map<String, String> authorizeUser(UserLoginDTO userLoginDTO) throws UnauthorizedException {
 
         Optional<User> optionalUser = Optional.ofNullable(repository.findByEmail(userLoginDTO.email));
         User user = optionalUser.orElseThrow(() -> new UnauthorizedException("Email ou Senha inválidos."));
@@ -72,9 +75,28 @@ public class UserService {
         user.setJwt(hashJwt);
 
         userDAO.updateUser(user);
-
-        return hashJwt;
+        Map<String, String> result = new HashMap<>();
+        result.put("hash", hashJwt);
+        result.put("userType", user.getUserTypeEnum().toString());
+        return result;
     }
+
+    public void activatePlan(String userHash) throws BadRequestException {
+        Optional<User> optionalUser = Optional.ofNullable(repository.findByJwt(userHash));
+        User user = optionalUser.orElseThrow(() -> new BadRequestException("Erro ao recuperar usuário. Faça login novamente."));
+
+       if(user.getUserTypeEnum() != UserTypeEnum.ADMIN) {
+           user.setUserTypeEnum(UserTypeEnum.SUBSCRIBE);
+       }
+       userDAO.updateUser(user);
+    }
+
+    public UserTypeEnum checkUserType(String userHash) throws BadRequestException {
+        Optional<User> optionalUser = Optional.ofNullable(repository.findByJwt(userHash));
+        User user = optionalUser.orElseThrow(() -> new BadRequestException("Erro ao recuperar usuário. Faça login novamente."));
+        return user.getUserTypeEnum();
+    }
+
 
     public Optional<User> deleteUserById(Long id) {
         repository.findById(id).ifPresent(user -> repository.deleteById(id));

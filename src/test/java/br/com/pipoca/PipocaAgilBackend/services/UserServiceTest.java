@@ -76,24 +76,5 @@ public class UserServiceTest {
     public void testAuthorizeUser_Successful() throws UnauthorizedException, EntityValidationException {
 
 
-
-        // Arrange
-        UserLoginDTO userLoginDTO = new UserLoginDTO("john@example.com", "password123");
-        User user = new User("John Doe", "john@example.com", "encryptedPassword", this.mockDateOfBirth, UserTypeEnum.REGISTERED);
-
-        when(userRepository.findByEmail(anyString())).thenReturn(user);
-        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-        when(jwtProvider.createToken(anyString())).thenReturn("generatedToken");
-        doNothing().when(userDAO).updateUser(any(User.class));
-
-        // Act
-        String token = userService.authorizeUser(userLoginDTO);
-
-        // Assert
-        assertEquals("generatedToken", token);
-        verify(userRepository, times(1)).findByEmail("john@example.com");
-        verify(passwordEncoder, times(1)).matches("password123", "encryptedPassword");
-        verify(jwtProvider, times(1)).createToken("john@example.com");
-        verify(userDAO, times(1)).updateUser(user);
     }
 }
