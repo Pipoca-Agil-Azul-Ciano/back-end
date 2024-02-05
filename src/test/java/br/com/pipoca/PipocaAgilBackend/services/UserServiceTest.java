@@ -9,6 +9,7 @@ import br.com.pipoca.PipocaAgilBackend.enums.UserTypeEnum;
 import br.com.pipoca.PipocaAgilBackend.exceptions.ConflictException;
 import br.com.pipoca.PipocaAgilBackend.exceptions.UnauthorizedException;
 import br.com.pipoca.PipocaAgilBackend.providers.jwt.JwtProvider;
+import br.com.pipoca.PipocaAgilBackend.providers.passwordGenerator.PasswordGenerator;
 import br.com.pipoca.PipocaAgilBackend.repository.UserDAO;
 import br.com.pipoca.PipocaAgilBackend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,11 +47,13 @@ public class UserServiceTest {
     @Mock
     private Communication communication;
 
+    @Mock
+    private PasswordGenerator passwordGenerator;
     private final LocalDate mockDateOfBirth = LocalDate.parse("01/01/1990", DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        userService = new UserService(userRepository, userDAO, passwordEncoder, jwtProvider, communication);
+        userService = new UserService(userRepository, userDAO, passwordEncoder, jwtProvider, communication, passwordGenerator);
 
     }
 

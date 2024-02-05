@@ -11,18 +11,16 @@ import java.net.URL;
 
 @Component
 public class Communication {
-    public void MailServiceMessage(String userName, String userEmail, MailTypeEnum mailType, String bodyParam) throws InternalErrorException {
+    public void mailServiceMessage(String userName, String userEmail, MailTypeEnum mailType, String bodyParam) throws InternalErrorException {
         try {
             URL url = new URL("http://localhost:3000/mail/send");
 
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-            // Configurar a requisição
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/json");
             connection.setDoOutput(true);
 
-            // Escrever os dados no corpo da requisição
             String requestBody = "{"
                     + "\"userName\":\"" + userName + "\","
                     + "\"userEmail\":\"" + userEmail + "\","

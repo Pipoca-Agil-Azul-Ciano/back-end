@@ -1,5 +1,6 @@
 package br.com.pipoca.PipocaAgilBackend.controller;
 
+import br.com.pipoca.PipocaAgilBackend.dtos.RecoveryPasswordDTO;
 import br.com.pipoca.PipocaAgilBackend.dtos.UserIdentityDTO;
 import br.com.pipoca.PipocaAgilBackend.dtos.UserLoginDTO;
 import br.com.pipoca.PipocaAgilBackend.dtos.UserRegisterDTO;
@@ -151,11 +152,50 @@ public class UserController {
                     )
             )
     })
-    @PostMapping("/activatePlan")
+    @PostMapping("/subscription/activate")
     public ResponseEntity<String> activatePlan(@RequestBody @Valid UserIdentityDTO identity) {
         try {
-            service.activatePlan(identity.userHash);
+            service.activateSubscription(identity.userHash);
             return ResponseEntity.ok().body("Plano assinante ativado com sucesso!");
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno, tente novamente mais tarde.");
+        }
+    }
+
+    @Operation(summary = "Disable Plan")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Account disable Plan",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "Plano assinante cancelado com sucesso!"
+                            )
+                    )),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad Request",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "Erro ao recuperar usuário. Faça login novamente."
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "Erro interno, tente novamente mais tarde."
+                            )
+                    )
+            )
+    })
+    @PostMapping("/subscription/disable")
+    public ResponseEntity<String> disablePlan(@RequestBody @Valid UserIdentityDTO identity) {
+        try {
+            service.disableSubscription(identity.userHash);
+            return ResponseEntity.ok().body("Plano assinante cancelado com sucesso!");
         } catch (BadRequestException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
@@ -202,6 +242,18 @@ public class UserController {
         }
    }
 
+   @PostMapping("/password-recovery")
+   public ResponseEntity<String> recoveryPassword(@RequestBody @Valid RecoveryPasswordDTO recoveryDTO) {
+       try {
+           service.recoveryPassword(recoveryDTO.email);
+           return ResponseEntity.ok().body("");
+       } catch (BadRequestException e) {
+           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+       } catch (Exception e) {
+           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno, tente novamente mais tarde.");
+       }
+   }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteById(@PathVariable Long id) {
         try {
@@ -211,8 +263,6 @@ public class UserController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno, tente novamente mais tarde.");
         }
-
-
     }
 
 

@@ -5,6 +5,6 @@ import lombok.NoArgsConstructor;
 
 
 public enum UserTypeEnum {
-    ADMIN, REGISTERED, SUBSCRIBE
+    ADMIN, REGISTERED, SUBSCRIBER
 
 }

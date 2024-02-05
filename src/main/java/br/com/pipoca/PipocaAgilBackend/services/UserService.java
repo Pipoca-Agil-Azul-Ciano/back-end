@@ -2,6 +2,7 @@ package br.com.pipoca.PipocaAgilBackend.services;
 
 
 import br.com.pipoca.PipocaAgilBackend.communication.Communication;
+import br.com.pipoca.PipocaAgilBackend.dtos.RecoveryPasswordDTO;
 import br.com.pipoca.PipocaAgilBackend.dtos.UserLoginDTO;
 import br.com.pipoca.PipocaAgilBackend.dtos.UserRegisterDTO;
 import br.com.pipoca.PipocaAgilBackend.entity.User;
@@ -13,6 +14,7 @@ import br.com.pipoca.PipocaAgilBackend.exceptions.ConflictException;
 import br.com.pipoca.PipocaAgilBackend.exceptions.InternalErrorException;
 import br.com.pipoca.PipocaAgilBackend.exceptions.UnauthorizedException;
 import br.com.pipoca.PipocaAgilBackend.providers.jwt.JwtProvider;
+import br.com.pipoca.PipocaAgilBackend.providers.passwordGenerator.PasswordGenerator;
 import br.com.pipoca.PipocaAgilBackend.repository.UserDAO;
 import br.com.pipoca.PipocaAgilBackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,12 +41,16 @@ public class UserService {
     @Autowired
     private final Communication communication;
 
-    public UserService(UserRepository repository, UserDAO userDAO, PasswordEncoder passwordEncoder, JwtProvider jwtProvider, Communication communication) {
+    @Autowired
+    private final PasswordGenerator passwordGenerator;
+
+    public UserService(UserRepository repository, UserDAO userDAO, PasswordEncoder passwordEncoder, JwtProvider jwtProvider, Communication communication, PasswordGenerator passwordGenerator) {
         this.repository = repository;
         this.userDAO = userDAO;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
         this.communication = communication;
+        this.passwordGenerator = passwordGenerator;
     }
 
     public int createUser(UserRegisterDTO userRegisterDTO) throws ConflictException, EntityValidationException {
@@ -56,7 +62,7 @@ public class UserService {
         User user = new User(userRegisterDTO.fullName, userRegisterDTO.email, passwordEncrypted, userRegisterDTO.dateBirth, UserTypeEnum.REGISTERED);
 
         try {
-            this.communication.MailServiceMessage(user.getFullName(), user.getEmail(), MailTypeEnum.WELCOME, null);
+            this.communication.mailServiceMessage(user.getFullName(), user.getEmail(), MailTypeEnum.WELCOME, null);
         } catch (InternalErrorException e) {
             throw new RuntimeException(e);
         }
@@ -81,22 +87,48 @@ public class UserService {
         return result;
     }
 
-    public void activatePlan(String userHash) throws BadRequestException {
-        Optional<User> optionalUser = Optional.ofNullable(repository.findByJwt(userHash));
-        User user = optionalUser.orElseThrow(() -> new BadRequestException("Erro ao recuperar usuário. Faça login novamente."));
-
-       if(user.getUserTypeEnum() != UserTypeEnum.ADMIN) {
-           user.setUserTypeEnum(UserTypeEnum.SUBSCRIBE);
-       }
-       userDAO.updateUser(user);
-    }
-
     public UserTypeEnum checkUserType(String userHash) throws BadRequestException {
         Optional<User> optionalUser = Optional.ofNullable(repository.findByJwt(userHash));
         User user = optionalUser.orElseThrow(() -> new BadRequestException("Erro ao recuperar usuário. Faça login novamente."));
         return user.getUserTypeEnum();
     }
 
+    public void activateSubscription(String userHash) throws BadRequestException {
+        Optional<User> optionalUser = Optional.ofNullable(repository.findByJwt(userHash));
+        User user = optionalUser.orElseThrow(() -> new BadRequestException("Erro ao recuperar usuário. Faça login novamente."));
+
+
+        if (user.getUserTypeEnum() != UserTypeEnum.ADMIN) {
+            user.setUserTypeEnum(UserTypeEnum.SUBSCRIBER);
+        }
+        userDAO.updateUser(user);
+    }
+
+    public void disableSubscription(String userHash) throws BadRequestException {
+        Optional<User> optionalUser = Optional.ofNullable(repository.findByJwt(userHash));
+        User user = optionalUser.orElseThrow(() -> new BadRequestException("Erro ao recuperar usuário. Faça login novamente."));
+
+
+        if (user.getUserTypeEnum() != UserTypeEnum.ADMIN) {
+            user.setUserTypeEnum(UserTypeEnum.REGISTERED);
+        }
+        userDAO.updateUser(user);
+    }
+
+    public void recoveryPassword(String userEmail) throws BadRequestException {
+        Optional<User> optionalUser = Optional.ofNullable(repository.findByEmail(userEmail));
+        User user = optionalUser.orElseThrow(() -> new BadRequestException("Email incorreto."));
+
+        String newPassword = passwordGenerator.generate();
+        user.setPassword(newPassword);
+        userDAO.updateUser(user);
+
+        try {
+            this.communication.mailServiceMessage(user.getFullName(), user.getEmail(), MailTypeEnum.RECOVERYPASSWORD, newPassword);
+        } catch (InternalErrorException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public Optional<User> deleteUserById(Long id) {
         repository.findById(id).ifPresent(user -> repository.deleteById(id));
