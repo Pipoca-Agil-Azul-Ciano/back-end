@@ -13,7 +13,7 @@ import java.net.URL;
 public class Communication {
     public void mailServiceMessage(String userName, String userEmail, MailTypeEnum mailType, String bodyParam) throws InternalErrorException {
         try {
-            URL url = new URL("http://localhost:3000/mail/send");
+            URL url = new URL("http://4.228.88.39:3000/mail/send");
 
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -32,7 +32,6 @@ public class Communication {
                 wr.flush();
             }
             int responseCode = connection.getResponseCode();
-            System.out.println("Código de resposta: " + responseCode);
         } catch (IOException e) {
             throw new InternalErrorException(e.getMessage());
         }
