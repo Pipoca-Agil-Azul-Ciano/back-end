@@ -1,9 +1,6 @@
 package br.com.pipoca.PipocaAgilBackend.controller;
 
-import br.com.pipoca.PipocaAgilBackend.dtos.RecoveryPasswordDTO;
-import br.com.pipoca.PipocaAgilBackend.dtos.UserIdentityDTO;
-import br.com.pipoca.PipocaAgilBackend.dtos.UserLoginDTO;
-import br.com.pipoca.PipocaAgilBackend.dtos.UserRegisterDTO;
+import br.com.pipoca.PipocaAgilBackend.dtos.*;
 import br.com.pipoca.PipocaAgilBackend.entity.User;
 import br.com.pipoca.PipocaAgilBackend.entity.validation.EntityValidationException;
 import br.com.pipoca.PipocaAgilBackend.enums.UserTypeEnum;
@@ -202,13 +199,51 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno, tente novamente mais tarde.");
         }
     }
-
-    @Operation(summary = "Verify User Type")
+    @Operation(summary = "Password Recovery")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Verify User Type",
+            @ApiResponse(responseCode = "200", description = "Password Recovery by sending password by email",
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(
-                                    value = "REGISTERED"
+                                    value = "Nova senha enviada por email."
+                            )
+                    )),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad Request",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "Email incorreto."
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "Erro interno, tente novamente mais tarde."
+                            )
+                    )
+            )
+    })
+   @PostMapping("/password-recovery")
+   public ResponseEntity<String> recoveryPassword(@RequestBody @Valid RecoveryPasswordDTO recoveryDTO) {
+       try {
+           service.recoveryPassword(recoveryDTO.email);
+           return ResponseEntity.ok().body("Nova senha enviada por email.");
+       } catch (BadRequestException e) {
+           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+       } catch (Exception e) {
+           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno, tente novamente mais tarde.");
+       }
+   }
+
+    @Operation(summary = "Update User")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Update user with jwt and user infos",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"fullName\": \"John Doe\", \"email\": \"john.doe@example.com\", \"dateBirth\": \"1990-01-01\", \"userType\": \"SUBSCRIBE\"}"
                             )
                     )),
             @ApiResponse(
@@ -230,29 +265,56 @@ public class UserController {
                     )
             )
     })
-    @PostMapping("/verify")
-    public ResponseEntity<String> verifyUser(@RequestBody @Valid UserIdentityDTO identity) {
-        try {
-            String userType = service.checkUserType(identity.userHash).toString();
-            return ResponseEntity.ok().body(userType);
-        } catch (BadRequestException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno, tente novamente mais tarde.");
-        }
-   }
-
-   @PostMapping("/password-recovery")
-   public ResponseEntity<String> recoveryPassword(@RequestBody @Valid RecoveryPasswordDTO recoveryDTO) {
+   @PostMapping("/update")
+   public ResponseEntity<Object> updateUser(@RequestBody @Valid UpdateUserDTO updateDTO) {
        try {
-           service.recoveryPassword(recoveryDTO.email);
-           return ResponseEntity.ok().body("");
+            UserDTO updatedUser = service.updateUser(updateDTO);
+           return ResponseEntity.ok().body(updatedUser);
        } catch (BadRequestException e) {
            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
        } catch (Exception e) {
            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno, tente novamente mais tarde.");
        }
    }
+
+    @Operation(summary = "User Infos")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Get User infos by JWT HASH",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "{\"fullName\": \"John Doe\", \"email\": \"john.doe@example.com\", \"dateBirth\": \"1990-01-01\", \"userType\": \"SUBSCRIBE\"}"
+                            )
+                    )),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad Request",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "Erro ao recuperar usuário. Faça login novamente."
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = "Erro interno, tente novamente mais tarde."
+                            )
+                    )
+            )
+    })
+   @GetMapping("/{userHash}")
+    public ResponseEntity<Object> userInfos(@PathVariable String userHash) {
+        try {
+            UserDTO userInfos = service.userInfos(userHash);
+            return ResponseEntity.ok().body(userInfos);
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno, tente novamente mais tarde.");
+        }
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteById(@PathVariable Long id) {

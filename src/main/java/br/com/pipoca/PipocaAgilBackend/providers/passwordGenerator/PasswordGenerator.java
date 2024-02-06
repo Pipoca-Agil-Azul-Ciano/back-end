@@ -9,7 +9,7 @@ public class PasswordGenerator {
     private static final String UPPERCASE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final String LOWERCASE_LETTERS = "abcdefghijklmnopqrstuvwxyz";
     private static final String DIGITS = "0123456789";
-    private static final String SPECIAL_CHARACTERS = "!@#$%^&*()-=_+[]{}|;':,.<>?";
+    private static final String SPECIAL_CHARACTERS = "!@#$%&*";
 
     public String generate() {
         SecureRandom random = new SecureRandom();
@@ -17,12 +17,14 @@ public class PasswordGenerator {
 
         appendRandomCharacter(password, UPPERCASE_LETTERS, random);
         appendRandomCharacter(password, LOWERCASE_LETTERS, random);
+
         appendRandomCharacter(password, DIGITS, random);
+        appendRandomCharacter(password, DIGITS, random);
+
         appendRandomCharacter(password, SPECIAL_CHARACTERS, random);
 
-
         String allCharacters = UPPERCASE_LETTERS + LOWERCASE_LETTERS + DIGITS + SPECIAL_CHARACTERS;
-        for (int i = 4; i < 8; i++) {
+        for (int i = 5; i < 12; i++) {
             appendRandomCharacter(password, allCharacters, random);
         }
 

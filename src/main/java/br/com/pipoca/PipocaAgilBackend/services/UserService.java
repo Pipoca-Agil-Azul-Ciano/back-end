@@ -2,9 +2,7 @@ package br.com.pipoca.PipocaAgilBackend.services;
 
 
 import br.com.pipoca.PipocaAgilBackend.communication.Communication;
-import br.com.pipoca.PipocaAgilBackend.dtos.RecoveryPasswordDTO;
-import br.com.pipoca.PipocaAgilBackend.dtos.UserLoginDTO;
-import br.com.pipoca.PipocaAgilBackend.dtos.UserRegisterDTO;
+import br.com.pipoca.PipocaAgilBackend.dtos.*;
 import br.com.pipoca.PipocaAgilBackend.entity.User;
 import br.com.pipoca.PipocaAgilBackend.entity.validation.EntityValidationException;
 import br.com.pipoca.PipocaAgilBackend.enums.MailTypeEnum;
@@ -21,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.swing.text.html.Option;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,12 +87,6 @@ public class UserService {
         return result;
     }
 
-    public UserTypeEnum checkUserType(String userHash) throws BadRequestException {
-        Optional<User> optionalUser = Optional.ofNullable(repository.findByJwt(userHash));
-        User user = optionalUser.orElseThrow(() -> new BadRequestException("Erro ao recuperar usuário. Faça login novamente."));
-        return user.getUserTypeEnum();
-    }
-
     public void activateSubscription(String userHash) throws BadRequestException {
         Optional<User> optionalUser = Optional.ofNullable(repository.findByJwt(userHash));
         User user = optionalUser.orElseThrow(() -> new BadRequestException("Erro ao recuperar usuário. Faça login novamente."));
@@ -120,9 +114,9 @@ public class UserService {
         User user = optionalUser.orElseThrow(() -> new BadRequestException("Email incorreto."));
 
         String newPassword = passwordGenerator.generate();
-        user.setPassword(newPassword);
+        String hashedPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(hashedPassword);
         userDAO.updateUser(user);
-
         try {
             this.communication.mailServiceMessage(user.getFullName(), user.getEmail(), MailTypeEnum.RECOVERYPASSWORD, newPassword);
         } catch (InternalErrorException e) {
@@ -130,6 +124,31 @@ public class UserService {
         }
     }
 
+    public UserDTO updateUser(UpdateUserDTO updateDTO) throws BadRequestException {
+        Optional<User> optionalUser = Optional.ofNullable(repository.findByJwt(updateDTO.jwt));
+        User user = optionalUser.orElseThrow(() -> new BadRequestException("Erro ao recuperar usuário. Faça login novamente."));
+
+        user.setFullName(updateDTO.fullName);
+        user.setEmail(updateDTO.email);
+        String hashedPassword = passwordEncoder.encode(updateDTO.password);
+        if(hashedPassword.equals(user.getPassword())) {
+            throw new BadRequestException("Nova senha não deve ser igual a senha anterior.");
+        }
+        user.setPassword(hashedPassword);
+        user.setDateBirth(updateDTO.dateBirth);
+        user.setUpdatedAt(LocalDate.now());
+        userDAO.updateUser(user);
+
+        return new UserDTO(user.getFullName(), user.getEmail(), user.getDateBirth(), user.getUserTypeEnum());
+    }
+
+    public UserDTO userInfos(String userHash) throws BadRequestException {
+        Optional<User> optionalUser = Optional.ofNullable(repository.findByJwt(userHash));
+        User user = optionalUser.orElseThrow(() -> new BadRequestException("Erro ao recuperar usuário. Faça login novamente."));
+
+        return new UserDTO(user.getFullName(), user.getEmail(), user.getDateBirth(), user.getUserTypeEnum());
+
+    }
     public Optional<User> deleteUserById(Long id) {
         repository.findById(id).ifPresent(user -> repository.deleteById(id));
         return Optional.empty();
