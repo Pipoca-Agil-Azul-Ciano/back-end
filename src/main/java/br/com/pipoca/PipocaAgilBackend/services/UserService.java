@@ -124,16 +124,18 @@ public class UserService {
         }
     }
 
-    public UserDTO updateUser(UpdateUserDTO updateDTO) throws BadRequestException {
-        Optional<User> optionalUser = Optional.ofNullable(repository.findByJwt(updateDTO.jwt));
+    public UserDTO updateUser(String userHash, UpdateUserDTO updateDTO) throws BadRequestException {
+        Optional<User> optionalUser = Optional.ofNullable(repository.findByJwt(userHash));
         User user = optionalUser.orElseThrow(() -> new BadRequestException("Erro ao recuperar usuário. Faça login novamente."));
 
         user.setFullName(updateDTO.fullName);
         user.setEmail(updateDTO.email);
-        String hashedPassword = passwordEncoder.encode(updateDTO.password);
-        if(hashedPassword.equals(user.getPassword())) {
+        if(passwordEncoder.matches(updateDTO.password, user.getPassword())) {
             throw new BadRequestException("Nova senha não deve ser igual a senha anterior.");
         }
+
+        String hashedPassword = passwordEncoder.encode(updateDTO.password);
+
         user.setPassword(hashedPassword);
         user.setDateBirth(updateDTO.dateBirth);
         user.setUpdatedAt(LocalDate.now());

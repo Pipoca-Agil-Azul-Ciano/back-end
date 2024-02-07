@@ -265,10 +265,10 @@ public class UserController {
                     )
             )
     })
-   @PostMapping("/update")
-   public ResponseEntity<Object> updateUser(@RequestBody @Valid UpdateUserDTO updateDTO) {
+   @PutMapping("/update/{userHash}")
+   public ResponseEntity<Object> updateUser(@RequestBody @Valid UpdateUserDTO updateDTO, @PathVariable String userHash) {
        try {
-            UserDTO updatedUser = service.updateUser(updateDTO);
+            UserDTO updatedUser = service.updateUser(userHash, updateDTO);
            return ResponseEntity.ok().body(updatedUser);
        } catch (BadRequestException e) {
            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
