@@ -128,17 +128,19 @@ public class UserService {
         Optional<User> optionalUser = Optional.ofNullable(repository.findByJwt(userHash));
         User user = optionalUser.orElseThrow(() -> new BadRequestException("Erro ao recuperar usuário. Faça login novamente."));
 
-        user.setFullName(updateDTO.fullName);
-        user.setEmail(updateDTO.email);
-        if(passwordEncoder.matches(updateDTO.password, user.getPassword())) {
-            throw new BadRequestException("Nova senha não deve ser igual a senha anterior.");
+        if (updateDTO.password != null && !updateDTO.password.isEmpty()) {
+            if (passwordEncoder.matches(updateDTO.password, user.getPassword())) {
+                throw new BadRequestException("Nova senha não deve ser igual a senha anterior.");
+            }
+            String hashedPassword = passwordEncoder.encode(updateDTO.password);
+            user.setPassword(hashedPassword);
         }
 
-        String hashedPassword = passwordEncoder.encode(updateDTO.password);
-
-        user.setPassword(hashedPassword);
-        user.setDateBirth(updateDTO.dateBirth);
+        user.setFullName(updateDTO.fullName != null && !updateDTO.fullName.isEmpty() ? updateDTO.fullName : user.getFullName());
+        user.setEmail(updateDTO.email != null && !updateDTO.email.isEmpty() ? updateDTO.email : user.getEmail());
+        user.setDateBirth(updateDTO.dateBirth != null ? updateDTO.dateBirth : user.getDateBirth());
         user.setUpdatedAt(LocalDate.now());
+
         userDAO.updateUser(user);
 
         return new UserDTO(user.getFullName(), user.getEmail(), user.getDateBirth(), user.getUserTypeEnum());
@@ -151,6 +153,7 @@ public class UserService {
         return new UserDTO(user.getFullName(), user.getEmail(), user.getDateBirth(), user.getUserTypeEnum());
 
     }
+
     public Optional<User> deleteUserById(Long id) {
         repository.findById(id).ifPresent(user -> repository.deleteById(id));
         return Optional.empty();
